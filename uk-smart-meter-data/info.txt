@@ -1,0 +1,1 @@
+Store the unzipped csv files of the UK smart meter dataset here in order to make the jupyter notebook work.
