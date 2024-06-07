@@ -168,3 +168,5 @@ cython_debug/
 
 # MacOS
 .DS_Store
+/uk-smart-meter-data
+/uk_smart_meter_cleaned_imputed
