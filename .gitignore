@@ -170,4 +170,4 @@ cython_debug/
 .DS_Store
 /uk-smart-meter-data
 /uk_smart_meter_cleaned_imputed
-/uk_smart_meter_aggregated
+/uk-smart-meter-aggregated
