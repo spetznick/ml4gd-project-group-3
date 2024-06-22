@@ -171,3 +171,5 @@ cython_debug/
 /uk-smart-meter-data
 /uk_smart_meter_cleaned_imputed
 /uk-smart-meter-aggregated
+/uk_smart_meter_aggregated
+similarity_matrix
