@@ -42,3 +42,13 @@ def get_windows_idx(start,end,in_window,out_window):
         #out_idx.append(pd.date_range(start=current+pd.Timedelta(hours=in_window),periods=out_window,freq='h'))
         current+=1
     return in_idx,out_idx
+
+
+def get_train_batch_blocks(start,end,batch_size=64):
+    blocks=[]
+    curr_start=start
+    while curr_start<end:
+        curr_end=min(curr_start+batch_size,end)
+        blocks.append(np.arange(curr_start,curr_end))
+        curr_start+=batch_size
+    return blocks
