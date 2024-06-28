@@ -59,9 +59,7 @@ def _get_timeseries_for_node(data: pd.DataFrame, node: Union[str, int]) -> pd.Da
     Returns:
         pd.DataFrame: Timeseries for the specified node.
     """
-    if type(node) == int:
-        node_data = data[node]
-    elif type(node) == str:
+    if isinstance(node, (int, np.integer, str)):
         node_data = data[node]
     else:
         raise ValueError("Node should be either an integer (index in adjacency matrix) or a string (LCLid).")
