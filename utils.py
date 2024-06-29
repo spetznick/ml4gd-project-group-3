@@ -81,6 +81,50 @@ class TemporalGCNLayer(MessagePassing):
             x_out = adj_sparse_tensor.matmul(x_out)
         return x_out
 
+    def forward_six_hours(self, dataset, start_idx) -> Tensor:
+        # keys of the given dataset as tensor
+        indices = torch.Tensor(list(dataset.keys())).int()
+        batch_size = len(indices) # 128
+        first_idx = indices[0].item() # since it is a tensor
+
+        # Intialize output tensor # (428, 104)
+        out = torch.zeros(dataset[first_idx].x.shape[0], 6).to(self.device)
+
+        # Cache adjacency matrices and feature matrices
+        adj_matrices = []
+        x_t_matrices = []
+
+        for i in range(first_idx, first_idx + batch_size):
+            edge_index = dataset[i].edge_index.long().to(self.device)
+            edge_weight = dataset[i].edge_weight.to(self.device)
+            adj_sparse_tensor = SparseTensor(row = edge_index[0], col = edge_index[1], value = edge_weight)
+            adj_matrices.append(adj_sparse_tensor)
+            x_t_matrices.append(dataset[i].x.to(self.device))
+
+        # Compute the output using cached matrices
+        for ith_step, i_p in enumerate(range(start_idx, start_idx + 6)):
+
+            out_kp = torch.zeros_like(x_t_matrices[0]).to(self.device)
+            # i_p = 0
+            # x_t_minus_p = x_t_matrices[idx]
+            # i_p > 0
+            #   idx =
+            for p in range(self.P):
+                idx = i_p + p
+                adj_sparse_tensor = adj_matrices[idx]
+                x_t_minus_p = x_t_matrices[idx]
+
+                for k in range(self.K + 1):
+                    h_kp = self.h[k, p]
+                    out_kp += h_kp * self.propagate(adj_sparse_tensor, x = x_t_minus_p, k = k)
+
+            out[:, ith_step] = self.m(out_kp.view(-1)) # single step prediction
+            assert out[:, ith_step].unsqueeze(dim=-1).shape == x_t_matrices[i_p + self.P + 1].shape, f"#nodes changes over forecast window: {out[:, ith_step].shape} != {x_t_matrices[i_p + self.P + 1].shape}"
+            x_t_matrices[i_p + self.P + 1] = out[:, ith_step].unsqueeze(dim=-1)
+
+        return self.m(out).clone().detach()
+
+
 class TemporalGCN(nn.Module):
     def __init__(self, in_channels, out_channels, K, P):
         super(TemporalGCN, self).__init__()
@@ -88,6 +132,9 @@ class TemporalGCN(nn.Module):
 
     def forward(self, dataset):
         return self.gcn_layer(dataset)
+
+    def forecast_six_hours(self, dataset, start_idx):
+        return self.gcn_layer.forward_six_hours(dataset, start_idx)
 
 
 def get_target(window_idx, all_nodes, P, df_agg):
